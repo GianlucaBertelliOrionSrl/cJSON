@@ -453,12 +453,10 @@ CJSON_PUBLIC(char*) cJSON_SetValuestring(cJSON *object, const char *valuestring)
 
     if (v1_len <= v2_len)
     {
-        /* strcpy does not handle overlapping string: [X1, X2] [Y1, Y2] => X2 < Y1 or Y2 < X1 */
-        if (!( valuestring + v1_len < object->valuestring || object->valuestring + v2_len < valuestring ))
-        {
-            return NULL;
-        }
-        strcpy(object->valuestring, valuestring);
+        /* memmove gestisce correttamente eventuali sovrapposizioni tra
+           source e destination (a differenza di strcpy) e non richiede
+           confronti di puntatori tra allocazioni distinte (UB in C std). */
+        memmove(object->valuestring, valuestring, v1_len + 1);
         return object->valuestring;
     }
     copy = (char*) cJSON_strdup((const unsigned char*)valuestring, &global_hooks);
